@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fixmate-ai-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fixmate}
+      POSTGRES_USER: ${POSTGRES_USER:-fixmate}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fixmate}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    container_name: fixmate-ai-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: fixmate-ai-backend
+    depends_on:
+      - postgres
+      - qdrant
+    env_file:
+      - backend/.env
+    volumes:
+      - backend_uploads:/app/uploads
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: fixmate-ai-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  backend_uploads:

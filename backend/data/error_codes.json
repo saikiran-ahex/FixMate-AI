@@ -1,0 +1,30 @@
+{
+  "washing_machine": {
+    "E21": {
+      "title": "Drainage Restriction",
+      "summary": "The washer is detecting slow or blocked draining.",
+      "estimated_fix_time": "15-30 minutes",
+      "steps": [
+        "Turn off and unplug the washer.",
+        "Open the service panel and clean the drain filter.",
+        "Check the drain hose for bends or clogs.",
+        "Run a rinse and spin cycle to verify draining."
+      ]
+    }
+  },
+  "refrigerator": {
+    "E05": {
+      "title": "Temperature Sensor Fault",
+      "summary": "The refrigerator is receiving inconsistent readings from a cooling sensor.",
+      "estimated_fix_time": "10-15 minutes",
+      "steps": [
+        "Power cycle the refrigerator for five minutes.",
+        "Confirm vents are not blocked by food containers.",
+        "Move the unit away from the wall for better airflow.",
+        "If the code returns, schedule service for sensor inspection."
+      ]
+    }
+  },
+  "dishwasher": {},
+  "dryer": {}
+}

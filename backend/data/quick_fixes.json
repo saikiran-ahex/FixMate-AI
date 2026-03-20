@@ -1,0 +1,26 @@
+[
+  {
+    "appliance_type": "washing_machine",
+    "category": "drainage",
+    "title": "Clear a basic washer drainage issue",
+    "why_it_works": "Drainage problems are often caused by a blocked filter or a pinched drain hose.",
+    "steps": [
+      "Pause the cycle and unplug the washer.",
+      "Clean the drain filter and remove lint or coins.",
+      "Straighten the drain hose and make sure it is not crushed.",
+      "Restart with a short drain or spin program."
+    ]
+  },
+  {
+    "appliance_type": "refrigerator",
+    "category": "cooling",
+    "title": "Restore airflow for weak cooling",
+    "why_it_works": "Poor airflow and incorrect temperature settings are common reasons for uneven cooling.",
+    "steps": [
+      "Set the refrigerator to the recommended mid-range temperature.",
+      "Clear blocked air vents inside the fresh food and freezer sections.",
+      "Vacuum dust from the condenser area if accessible.",
+      "Wait several hours and confirm temperatures stabilize."
+    ]
+  }
+]

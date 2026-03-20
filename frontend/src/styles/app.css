@@ -1,0 +1,105 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --bg: #f5efe5;
+  --panel: rgba(255, 250, 244, 0.84);
+  --panel-strong: #fff8ef;
+  --border: rgba(112, 87, 59, 0.16);
+  --text: #2d241b;
+  --muted: #6b5a49;
+  --accent: #c96b2c;
+  --accent-strong: #8d3e12;
+  --assistant: #fff3dd;
+  --user: #efe4d3;
+  --error: #ffe2df;
+  --summary: #edf4ef;
+  --shadow: 0 20px 60px rgba(101, 77, 50, 0.12);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(215, 122, 45, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(110, 155, 146, 0.18), transparent 26%),
+    linear-gradient(135deg, #f3ecdf 0%, #f7f5f1 48%, #ece5d8 100%);
+  color: var(--text);
+}
+button, textarea, input { font: inherit; }
+button { cursor: pointer; }
+#root { min-height: 100vh; }
+.hero-glow { position: absolute; width: 24rem; height: 24rem; border-radius: 999px; filter: blur(30px); opacity: 0.55; }
+.hero-glow-left { top: -4rem; left: -6rem; background: rgba(212, 117, 44, 0.28); }
+.hero-glow-right { right: -5rem; bottom: -5rem; background: rgba(97, 145, 135, 0.2); }
+.auth-shell, .dashboard-shell { position: relative; min-height: 100vh; overflow: hidden; }
+.auth-layout, .dashboard-shell { position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding: 2rem; }
+.auth-layout { display: grid; grid-template-columns: 1fr 0.92fr; gap: 1.5rem; min-height: 100vh; align-items: center; }
+.auth-brand, .auth-card, .sidebar-panel, .content-panel { border: 1px solid var(--border); background: var(--panel); backdrop-filter: blur(12px); border-radius: 28px; box-shadow: var(--shadow); }
+.auth-brand, .sidebar-panel { padding: 2rem; }
+.auth-card, .content-panel { padding: 1.5rem; }
+.eyebrow { margin: 0; text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent-strong); font-size: 0.78rem; }
+h1, h2 { margin: 0.75rem 0 1rem; line-height: 0.95; }
+h1 { font-size: clamp(3rem, 6vw, 5rem); }
+h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.brand-copy, .sidebar-copy, .chat-subtitle, .file-meta, .status-text, .empty-state { color: var(--muted); }
+.brand-copy, .sidebar-copy { line-height: 1.7; }
+.tab-row { display: flex; gap: 0.65rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.tab-button, .thread-item, .prompt-chip, .ghost-button, .secondary-button, .primary-button, .danger-button { border-radius: 18px; border: 1px solid transparent; transition: 160ms ease; }
+.tab-button, .thread-item, .prompt-chip, .secondary-button, .ghost-button { background: rgba(255, 248, 238, 0.82); border-color: rgba(201, 107, 44, 0.14); color: var(--text); }
+.tab-button.active, .thread-item.active { background: rgba(255, 237, 212, 0.95); border-color: rgba(201, 107, 44, 0.4); }
+.auth-form { display: grid; gap: 1rem; }
+.auth-form label { display: grid; gap: 0.4rem; }
+.auth-form input, .composer textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 18px; padding: 0.95rem 1rem;
+  background: rgba(255,255,255,0.72); color: var(--text);
+}
+.primary-button, .composer button {
+  border: 0; background: linear-gradient(135deg, #c96b2c 0%, #8d3e12 100%); color: white;
+  padding: 0.95rem 1.1rem;
+}
+.secondary-button, .ghost-button, .danger-button, .thread-item, .prompt-chip, .tab-button { padding: 0.9rem 1rem; }
+.ghost-button { background: transparent; }
+.danger-button { background: rgba(172, 65, 47, 0.1); border-color: rgba(172, 65, 47, 0.2); color: #8c2f1d; }
+.form-error { color: #9a3424; margin: 0; }
+.dashboard-shell { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; }
+.sidebar-panel { display: flex; flex-direction: column; gap: 1rem; }
+.thread-list, .file-grid, .summary-strip { display: grid; gap: 0.8rem; }
+.thread-item { text-align: left; }
+.content-panel { min-height: calc(100vh - 4rem); display: flex; flex-direction: column; }
+.panel-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.status-pill { padding: 0.55rem 0.85rem; border-radius: 999px; font-size: 0.88rem; font-weight: 600; }
+.status-pill.idle { background: rgba(111, 160, 134, 0.18); color: #2a6650; }
+.status-pill.busy { background: rgba(201, 107, 44, 0.14); color: var(--accent-strong); }
+.welcome-card, .chat-workspace { display: flex; flex-direction: column; gap: 1rem; flex: 1; }
+.prompt-list { display: grid; gap: 0.8rem; }
+.message-list { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 0.85rem; padding: 0.2rem; }
+.message-card, .summary-card, .file-card {
+  padding: 1rem; border-radius: 22px; border: 1px solid transparent; white-space: pre-wrap;
+}
+.message-card.assistant { align-self: flex-start; background: var(--assistant); max-width: 85%; }
+.message-card.user { align-self: flex-end; background: var(--user); max-width: 85%; }
+.message-card.error { background: var(--error); }
+.summary-card { background: var(--summary); border-color: rgba(83, 130, 101, 0.15); }
+.file-card { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 248, 238, 0.82); border-color: rgba(201, 107, 44, 0.14); }
+.message-role, .message-text, .chat-title, .chat-subtitle, .file-name, .file-meta { margin: 0; }
+.message-role { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-strong); margin-bottom: 0.4rem; }
+.message-text { line-height: 1.65; }
+.file-name { font-weight: 700; margin-bottom: 0.35rem; }
+.composer { display: grid; grid-template-columns: 1fr auto; gap: 0.85rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.composer textarea { resize: none; min-height: 5rem; }
+.upload-card { display: grid; gap: 0.5rem; padding: 1rem; border: 1px dashed rgba(201, 107, 44, 0.35); border-radius: 20px; background: rgba(255, 248, 238, 0.82); }
+.admin-shell { grid-template-columns: 340px 1fr; }
+.workspace-messages { min-height: 320px; }
+@media (max-width: 1024px) {
+  .auth-layout, .dashboard-shell { grid-template-columns: 1fr; }
+  .content-panel { min-height: 70vh; }
+}
+@media (max-width: 640px) {
+  .auth-layout, .dashboard-shell { padding: 1rem; }
+  .auth-brand, .auth-card, .sidebar-panel, .content-panel { border-radius: 22px; }
+  .composer { grid-template-columns: 1fr; }
+  .message-card.assistant, .message-card.user { max-width: 100%; }
+  .file-card { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+}

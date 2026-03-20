@@ -1,0 +1,17 @@
+[
+  {
+    "appliance_type": "washing_machine",
+    "symptom": "won't drain",
+    "category": "drainage"
+  },
+  {
+    "appliance_type": "washing_machine",
+    "symptom": "vibrates excessively",
+    "category": "vibration"
+  },
+  {
+    "appliance_type": "refrigerator",
+    "symptom": "not cooling",
+    "category": "cooling"
+  }
+]

@@ -1,0 +1,87 @@
+[
+  {
+    "model": "WM-FL500",
+    "name": "UltraClean Front Load Washer",
+    "brand": "HomeTech",
+    "type": "washing_machine",
+    "features": [
+      "WiFi connectivity",
+      "Steam cleaning",
+      "Auto-dosing detergent",
+      "Self-cleaning cycle"
+    ],
+    "specifications": {
+      "capacity": "5.0 cu ft",
+      "spin_speed": "1400 RPM",
+      "voltage": "120V"
+    },
+    "warranty": {
+      "parts_labor": "1 year",
+      "drum": "10 years",
+      "motor": "5 years"
+    }
+  },
+  {
+    "model": "RF-CX320",
+    "name": "CoolMax French Door Refrigerator",
+    "brand": "HomeTech",
+    "type": "refrigerator",
+    "features": [
+      "Dual cooling zones",
+      "Door alarm",
+      "Fast ice mode",
+      "Vacation mode"
+    ],
+    "specifications": {
+      "capacity": "32 cu ft",
+      "voltage": "120V",
+      "energy_rating": "Energy Star"
+    },
+    "warranty": {
+      "parts_labor": "1 year",
+      "compressor": "10 years"
+    }
+  },
+  {
+    "model": "DW-Q600",
+    "name": "QuietWash Dishwasher",
+    "brand": "KitchenPro",
+    "type": "dishwasher",
+    "features": [
+      "Third rack",
+      "Sanitize cycle",
+      "Leak sensor",
+      "Smart delay start"
+    ],
+    "specifications": {
+      "noise_level": "42 dB",
+      "place_settings": "15",
+      "voltage": "120V"
+    },
+    "warranty": {
+      "parts_labor": "1 year",
+      "tub": "5 years"
+    }
+  },
+  {
+    "model": "DR-HT450",
+    "name": "HeatDry Smart Dryer",
+    "brand": "LaundryWorks",
+    "type": "dryer",
+    "features": [
+      "Sensor drying",
+      "Wrinkle shield",
+      "Quick refresh",
+      "Steam assist"
+    ],
+    "specifications": {
+      "capacity": "7.4 cu ft",
+      "voltage": "240V",
+      "fuel_type": "Electric"
+    },
+    "warranty": {
+      "parts_labor": "1 year",
+      "heating_element": "3 years"
+    }
+  }
+]

@@ -1,0 +1,32 @@
+washing_machine:
+  vibration:
+    intro: "This sounds like a more involved vibration issue. I will walk through a few checks to narrow down the root cause."
+    questions:
+      - id: recently_moved
+        question: "Has the washer been moved or installed recently? Answer yes or no."
+        diagnosis_map:
+          "yes":
+            resolved: true
+            message: "Re-check leveling feet and transit bolts. Recent moves often reintroduce installation imbalance."
+      - id: load_type
+        question: "Does the vibration happen only with bulky loads like towels or bedding? Answer yes or no."
+        diagnosis_map:
+          "yes":
+            resolved: true
+            message: "This points to load distribution. Reduce load size and redistribute bulky items evenly around the drum."
+          "no":
+            resolved: false
+            message: "The issue may involve worn shock absorbers or suspension components. A technician inspection is recommended."
+refrigerator:
+  cooling:
+    intro: "Cooling issues can come from airflow, control settings, or sealed-system problems. Let us narrow it down."
+    questions:
+      - id: freezer_cold
+        question: "Is the freezer still cold while the refrigerator section is warm? Answer yes or no."
+        diagnosis_map:
+          "yes":
+            resolved: true
+            message: "That usually indicates an airflow issue between compartments. Check for blocked vents and inspect the evaporator fan."
+          "no":
+            resolved: false
+            message: "Both sections being warm suggests a broader cooling issue. Service is recommended for compressor or refrigerant diagnosis."

@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from openai import AsyncOpenAI
+
 from settings import Settings
 from utils import get_logger, log_event
 
@@ -22,11 +24,16 @@ class SemanticKernelGateway:
         self.settings = settings or Settings()
         self.enabled = False
         self.kernel = None
+        self.direct_client: AsyncOpenAI | None = None
         self.logger = get_logger("fixmate.kernel")
         self.last_error: str | None = None
+        self.last_completion_error: str | None = None
         self.has_openai_key = self.settings.has_openai
         self.kernel_installed = Kernel is not None
         self.openai_connector_installed = OpenAIChatCompletion is not None
+
+        if self.has_openai_key:
+            self.direct_client = AsyncOpenAI(api_key=self.settings.openai_api_key)
 
         if not self.has_openai_key or not self.kernel_installed or not self.openai_connector_installed:
             reasons = []
@@ -76,6 +83,7 @@ class SemanticKernelGateway:
             "openai_connector_installed": self.openai_connector_installed,
             "model": self.settings.openai_chat_model,
             "last_error": self.last_error,
+            "last_completion_error": self.last_completion_error,
         }
 
     async def complete_text(self, system_prompt: str, user_prompt: str, temperature: float = 0.1) -> str:
@@ -85,20 +93,33 @@ class SemanticKernelGateway:
         execution_settings = OpenAIChatPromptExecutionSettings(
             service_id="chat",
             temperature=temperature,
-            reasoning_effort="medium",
         )
         prompt = (
             f"System instructions:\n{system_prompt}\n\n"
             f"User input:\n{user_prompt}\n"
         )
         log_event(self.logger, 20, "kernel_complete_text_started", temperature=temperature)
-        result = await self.kernel.invoke_prompt(
-            prompt,
-            arguments=KernelArguments(settings=execution_settings),
-        )
-        text = str(result).strip()
-        log_event(self.logger, 20, "kernel_complete_text_completed", response_length=len(text))
-        return text
+        try:
+            result = await self.kernel.invoke_prompt(
+                prompt,
+                arguments=KernelArguments(settings=execution_settings),
+            )
+            text = str(result).strip()
+            self.last_completion_error = None
+            log_event(
+                self.logger,
+                20,
+                "kernel_complete_text_completed",
+                provider="semantic-kernel",
+                response_length=len(text),
+            )
+            return text
+        except Exception as error:
+            self.last_completion_error = str(error)
+            if not self._should_fallback_to_direct_openai(error):
+                raise
+            log_event(self.logger, 30, "kernel_complete_text_fallback", provider="semantic-kernel", error=str(error))
+            return await self._complete_text_direct(system_prompt, user_prompt, temperature)
 
     async def complete_json(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> dict[str, Any]:
         if not self.enabled or self.kernel is None or OpenAIChatPromptExecutionSettings is None or KernelArguments is None:
@@ -107,7 +128,6 @@ class SemanticKernelGateway:
         execution_settings = OpenAIChatPromptExecutionSettings(
             service_id="chat",
             temperature=temperature,
-            reasoning_effort="medium",
             response_format={"type": "json_object"},
         )
         prompt = (
@@ -116,12 +136,79 @@ class SemanticKernelGateway:
             f"User input:\n{user_prompt}\n"
         )
         log_event(self.logger, 20, "kernel_complete_json_started", temperature=temperature)
-        result = await self.kernel.invoke_prompt(
-            prompt,
-            arguments=KernelArguments(settings=execution_settings),
+        try:
+            result = await self.kernel.invoke_prompt(
+                prompt,
+                arguments=KernelArguments(settings=execution_settings),
+            )
+            payload = json.loads(_extract_json(str(result).strip()))
+            self.last_completion_error = None
+            log_event(
+                self.logger,
+                20,
+                "kernel_complete_json_completed",
+                provider="semantic-kernel",
+                keys=list(payload.keys()),
+            )
+            return payload
+        except Exception as error:
+            self.last_completion_error = str(error)
+            if not self._should_fallback_to_direct_openai(error):
+                raise
+            log_event(self.logger, 30, "kernel_complete_json_fallback", provider="semantic-kernel", error=str(error))
+            return await self._complete_json_direct(system_prompt, user_prompt, temperature)
+
+    def _should_fallback_to_direct_openai(self, error: Exception) -> bool:
+        if self.direct_client is None:
+            return False
+        return "Unrecognized request argument supplied: reasoning_effort" in str(error)
+
+    async def _complete_text_direct(self, system_prompt: str, user_prompt: str, temperature: float) -> str:
+        if self.direct_client is None:
+            raise RuntimeError("Direct OpenAI client is not configured.")
+
+        response = await self.direct_client.chat.completions.create(
+            model=self.settings.openai_chat_model,
+            temperature=temperature,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
         )
-        payload = json.loads(_extract_json(str(result).strip()))
-        log_event(self.logger, 20, "kernel_complete_json_completed", keys=list(payload.keys()))
+        text = (response.choices[0].message.content or "").strip()
+        self.last_completion_error = None
+        log_event(
+            self.logger,
+            20,
+            "kernel_complete_text_completed",
+            provider="openai-direct",
+            response_length=len(text),
+        )
+        return text
+
+    async def _complete_json_direct(self, system_prompt: str, user_prompt: str, temperature: float) -> dict[str, Any]:
+        if self.direct_client is None:
+            raise RuntimeError("Direct OpenAI client is not configured.")
+
+        response = await self.direct_client.chat.completions.create(
+            model=self.settings.openai_chat_model,
+            temperature=temperature,
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+        text = (response.choices[0].message.content or "").strip()
+        payload = json.loads(_extract_json(text))
+        self.last_completion_error = None
+        log_event(
+            self.logger,
+            20,
+            "kernel_complete_json_completed",
+            provider="openai-direct",
+            keys=list(payload.keys()),
+        )
         return payload
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -118,7 +119,7 @@ class RAGAgent:
                 ),
                 user_prompt=(
                     f"Question:\n{user_query}\n\n"
-                    f"Candidate chunks:\n{candidate_payload}"
+                    f"Candidate chunks:\n{json.dumps(candidate_payload, ensure_ascii=False)}"
                 ),
             )
             selected_ids = rerank_result.get("selected_chunk_ids", [])
@@ -192,6 +193,12 @@ class RAGAgent:
     def _fallback_answer(self, matches: list[dict[str, Any]]) -> str:
         top = matches[0]
         title = top.get("title") or top.get("source") or "the retrieved document"
+        runtime_error = self.gateway.last_completion_error
+        if runtime_error:
+            return (
+                f"I found relevant content in {title}, but the answer generation step failed before I could write a final response. "
+                f"Backend error: {runtime_error}"
+            )
         return (
             f"I found relevant content in {title}, but the LLM answer step is not active right now, "
             "so I am not going to return raw document chunks. Please verify OPENAI_API_KEY is loaded in the backend container and try again."
@@ -220,18 +227,17 @@ class RAGAgent:
         return window or [match]
 
 
-
 def _tokenize(text: str) -> set[str]:
     cleaned = "".join(char.lower() if char.isalnum() else " " for char in text)
     return {token for token in cleaned.split() if len(token) > 2}
-
 
 
 def _clean_context_text(text: str) -> str:
     cleaned = text or ""
     cleaned = re.sub(r"_+", " ", cleaned)
     cleaned = re.sub(r"\bPg\s+\d+\b", " ", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"\b\d+\s*[©]\s*\d{4}.*?reserved\.\b", " ", cleaned, flags=re.IGNORECASE)
+    # Fix: was r"\b\d+\s*[]\s*\d{4}..." - empty [] is an invalid character class
+    cleaned = re.sub(r"\b\d+\s*\S+\s*\d{4}.*?reserved\.", " ", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\bAll rights reserved\.\b", " ", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\bConnection digram\b", "Connection diagram", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()

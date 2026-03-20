@@ -3,75 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from services import DatabaseService, QdrantKnowledgeBase, SemanticKernelGateway
+from services import DatabaseService, SemanticKernelGateway
 from utils import get_logger, log_event
-
-
-@dataclass
-class RAGAgent:
-    gateway: SemanticKernelGateway = field(default_factory=SemanticKernelGateway)
-    knowledge_base: QdrantKnowledgeBase = field(default_factory=QdrantKnowledgeBase)
-
-    def __post_init__(self) -> None:
-        self.logger = get_logger("fixmate.rag")
-
-    async def answer_query(self, user_query: str) -> dict[str, Any]:
-        log_event(self.logger, 20, "rag_started", query_preview=user_query[:120])
-        matches = await self.knowledge_base.search(user_query)
-        if not matches:
-            log_event(self.logger, 30, "rag_no_matches")
-            return {
-                "agent": "rag",
-                "response": (
-                    "I could not find a confident match in the current appliance knowledge base. "
-                    "Please share the appliance type or model so I can narrow it down."
-                ),
-                "sources": [],
-            }
-
-        sources = [match["source"] for match in matches]
-        log_event(self.logger, 20, "rag_context_loaded", sources=sources, match_count=len(matches))
-        context = "\n\n".join(
-            f"Source: {match['source']}\nContent: {match['text']}"
-            for match in matches
-        )
-
-        if self.gateway.enabled:
-            try:
-                response = await self.gateway.complete_text(
-                    system_prompt=(
-                        "You are FixMate AI. Answer only from the supplied appliance support and uploaded document context. "
-                        "If context is incomplete, say what information is missing. "
-                        "Prefer short direct answers, then practical details."
-                    ),
-                    user_prompt=f"Question:\n{user_query}\n\nContext:\n{context}",
-                )
-                log_event(self.logger, 20, "rag_completed", provider="openai", sources=sources)
-                return {
-                    "agent": "rag",
-                    "response": response,
-                    "sources": sources,
-                }
-            except Exception as error:
-                log_event(self.logger, 40, "rag_llm_failed", error=str(error), sources=sources)
-
-        best = matches[0].get("metadata", {})
-        if "model" in best:
-            response = (
-                f"{best['name']} ({best['model']}) is a {best['brand']} "
-                f"{best['type'].replace('_', ' ')} with features like "
-                f"{', '.join(best['features'][:3])}. "
-                f"It offers {best['warranty']['parts_labor']} parts and labor coverage."
-            )
-        else:
-            response = matches[0]["text"]
-
-        log_event(self.logger, 20, "rag_completed", provider="fallback", sources=sources)
-        return {
-            "agent": "rag",
-            "response": response,
-            "sources": sources,
-        }
 
 
 @dataclass

@@ -12,8 +12,12 @@ except ImportError:  # pragma: no cover
 SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".json", ".csv", ".yaml", ".yml", ".log"}
 
 
-def extract_text_from_file(file_path: str | Path) -> str:
-    path = Path(file_path)
+def extract_text_from_file(file_path: str | Path, allowed_base: str | Path | None = None) -> str:
+    path = Path(file_path).resolve()
+    if allowed_base is not None:
+        base = Path(allowed_base).resolve()
+        if not str(path).startswith(str(base)):
+            raise ValueError(f"Path {path} is outside the allowed directory {base}")
     suffix = path.suffix.lower()
 
     if suffix == ".pdf":

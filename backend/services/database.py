@@ -358,8 +358,8 @@ class DatabaseService:
             if not path.exists():
                 continue
             try:
-                text = extract_text_from_file(path)
-            except OSError:
+                text = extract_text_from_file(path, allowed_base=self.settings.uploads_dir)
+            except (OSError, ValueError):
                 continue
             text = clean_text_for_storage(text)
             if not text.strip():

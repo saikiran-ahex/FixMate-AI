@@ -70,6 +70,9 @@ class QdrantKnowledgeBase:
             self.enabled = False
             log_event(self.logger, 40, "qdrant_initialize_failed", error=str(error))
 
+    # Minimum cosine similarity to include a result (0-1 scale)
+    _SCORE_THRESHOLD: float = 0.30
+
     async def search(self, query: str, top_k: int | None = None) -> list[dict[str, Any]]:
         await self.initialize()
         limit = top_k or self.settings.qdrant_top_k
@@ -81,13 +84,13 @@ class QdrantKnowledgeBase:
                     query=query_vector,
                     limit=limit,
                     with_payload=True,
+                    score_threshold=self._SCORE_THRESHOLD,
                 )
                 points = getattr(response, "points", response)
-                payloads = []
-                for point in points:
-                    payload = dict(point.payload or {})
-                    payload["_score"] = getattr(point, "score", None)
-                    payloads.append(payload)
+                payloads = [
+                    {**dict(point.payload or {}), "_score": getattr(point, "score", None)}
+                    for point in points
+                ]
                 log_event(
                     self.logger,
                     20,
@@ -257,25 +260,37 @@ class QdrantKnowledgeBase:
                 points_selector=models.FilterSelector(filter=models.Filter()),
             )
 
-        points = []
-        for document in self.documents:
-            points.append(
-                models.PointStruct(
-                    id=str(uuid.uuid4()),
-                    vector=await self._embed(document["text"]),
-                    payload=document,
-                )
+        # Batch embed all documents in one API call instead of N serial calls
+        _EMBED_BATCH = 256
+        texts = [doc["text"] for doc in self.documents]
+        vectors: list[list[float]] = []
+        for batch_start in range(0, len(texts), _EMBED_BATCH):
+            batch_texts = texts[batch_start : batch_start + _EMBED_BATCH]
+            response = await self.embedding_client.embeddings.create(
+                model=self.settings.openai_embedding_model,
+                input=batch_texts,
             )
+            # API returns items sorted by index
+            vectors.extend(item.embedding for item in sorted(response.data, key=lambda x: x.index))
+
+        points = [
+            models.PointStruct(id=str(uuid.uuid4()), vector=vectors[i], payload=doc)
+            for i, doc in enumerate(self.documents)
+        ]
 
         if points:
-            await self.qdrant.upsert(
-                collection_name=self.settings.qdrant_collection,
-                points=points,
-                wait=True,
-            )
+            # Upsert in batches to avoid request-size limits
+            _UPSERT_BATCH = 128
+            for batch_start in range(0, len(points), _UPSERT_BATCH):
+                await self.qdrant.upsert(
+                    collection_name=self.settings.qdrant_collection,
+                    points=points[batch_start : batch_start + _UPSERT_BATCH],
+                    wait=True,
+                )
             log_event(self.logger, 20, "qdrant_seed_completed", points=len(points))
 
     async def _embed(self, text: str) -> list[float]:
+        """Embed a single string (used for query-time embedding)."""
         response = await self.embedding_client.embeddings.create(
             model=self.settings.openai_embedding_model,
             input=text,
@@ -345,9 +360,9 @@ def _chunk_text(text: str, chunk_size: int, overlap: int) -> list[dict[str, Any]
             chunk_index += 1
         if end >= text_length:
             break
-        start = max(end - overlap, end)
-        if overlap > 0:
-            start = max(chunk_start + 1, end - overlap)
+        # Step forward by (chunk_size - overlap) so consecutive chunks share `overlap` chars
+        step = max(chunk_size - overlap, 1)
+        start = chunk_start + step
 
     return chunks
 

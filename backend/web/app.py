@@ -74,6 +74,8 @@ def health() -> tuple[object, int]:
             "vector_store": "qdrant",
             "qdrant_configured": orchestrator.knowledge_base.configured,
             "qdrant_initialized": orchestrator.knowledge_base.enabled,
+            "reranker": "cohere",
+            "reranker_status": orchestrator.rag_agent.reranker.status,
             "log_level": settings.log_level,
         }
     ), 200

@@ -3,7 +3,7 @@ from .orchestrator import SupportOrchestrator
 from .rag_agent import RAGAgent
 from .router import RouterAgent
 from .triage_agent import TriageAgent
-from .turboshoot_agent import TurboShootAgent
+from .troubleshooting_agent import TroubleshootingAgent
 
 __all__ = [
     "AutoResolverAgent",
@@ -11,5 +11,5 @@ __all__ = [
     "RouterAgent",
     "SupportOrchestrator",
     "TriageAgent",
-    "TurboShootAgent",
+    "TroubleshootingAgent",
 ]

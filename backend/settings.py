@@ -17,6 +17,8 @@ class Settings:
     openai_chat_model: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-5-mini")
     openai_embedding_model: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
     embedding_dimensions: int = int(os.getenv("OPENAI_EMBEDDING_DIMENSIONS", "1536"))
+    cohere_api_key: str = os.getenv("COHERE_API_KEY", "")
+    cohere_rerank_model: str = os.getenv("COHERE_RERANK_MODEL", "rerank-v3.5")
     qdrant_url: str = os.getenv("QDRANT_URL", "http://qdrant:6333")
     qdrant_api_key: str = os.getenv("QDRANT_API_KEY", "")
     qdrant_collection: str = os.getenv("QDRANT_COLLECTION", "fixmate_knowledge")
@@ -36,3 +38,7 @@ class Settings:
     @property
     def has_openai(self) -> bool:
         return bool(self.openai_api_key)
+
+    @property
+    def has_cohere(self) -> bool:
+        return bool(self.cohere_api_key)

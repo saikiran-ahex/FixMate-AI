@@ -53,7 +53,7 @@ class AutoResolverAgent:
             return {
                 "agent": "auto_resolver",
                 "resolved": False,
-                "response": "I do not have a safe quick fix for this issue yet, so I am escalating to TurboShoot.",
+                "response": "I do not have a safe quick fix for this issue yet, so I am escalating to troubleshooting.",
             }
 
         if self.gateway.enabled:

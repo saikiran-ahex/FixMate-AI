@@ -46,7 +46,7 @@ class TriageAgent:
                         "issue_category should be a short snake_case label like drainage, cooling, vibration, leak, heating, or general_fault. "
                         "severity must be one of ['low', 'medium', 'high']. "
                         "complexity must be one of ['low', 'medium', 'high']. "
-                        "recommended_handler must be one of ['auto_resolver', 'turboshoot']. "
+                        "recommended_handler must be one of ['auto_resolver', 'troubleshooting']. "
                         "Set error_code to null if none is present. Prefer auto_resolver only for safe common fixes."
                     ),
                     user_prompt=(
@@ -69,7 +69,7 @@ class TriageAgent:
         error_code = self._extract_error_code(user_query)
         severity = "high" if any(term in query for term in {"burning", "smoke", "sparks"}) else "medium"
         complexity = "low" if error_code or category in LOW_COMPLEXITY_CATEGORIES else "medium"
-        recommended_handler = "auto_resolver" if complexity == "low" else "turboshoot"
+        recommended_handler = "auto_resolver" if complexity == "low" else "troubleshooting"
 
         return {
             "appliance_type": appliance_type,

@@ -28,19 +28,19 @@ def test_auto_resolver_handles_cooling_issue():
     assert "airflow" in result["response"].lower()
 
 
-def test_turboshoot_starts_for_complex_vibration_issue():
+def test_troubleshooting_starts_for_complex_vibration_issue():
     orchestrator = SupportOrchestrator()
     result = orchestrator.handle_query(
         "My washing machine vibrates excessively even after leveling it and balancing the load"
     )
 
-    assert result["agent"] == "turboshoot"
+    assert result["agent"] == "troubleshooting"
     assert result["conversation_id"]
     assert result["questions"]
     assert result["input_key"] == "recently_moved"
 
 
-def test_turboshoot_continues_conversation():
+def test_troubleshooting_continues_conversation():
     orchestrator = SupportOrchestrator()
     first = orchestrator.handle_query(
         "My washing machine vibrates excessively even after leveling it and balancing the load"
@@ -51,6 +51,6 @@ def test_turboshoot_continues_conversation():
         {"recently_moved": "no"},
     )
 
-    assert follow_up["agent"] == "turboshoot"
+    assert follow_up["agent"] == "troubleshooting"
     assert follow_up["input_key"] == "load_type"
     assert "one more detail" in follow_up["message"].lower()

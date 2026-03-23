@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from services import QdrantKnowledgeBase, SemanticKernelGateway
+from services import CohereReranker, QdrantKnowledgeBase, SemanticKernelGateway
 from settings import Settings
 from utils import get_logger, log_event
 
@@ -14,6 +14,7 @@ from utils import get_logger, log_event
 class RAGAgent:
     gateway: SemanticKernelGateway = field(default_factory=SemanticKernelGateway)
     knowledge_base: QdrantKnowledgeBase = field(default_factory=QdrantKnowledgeBase)
+    reranker: CohereReranker = field(default_factory=CohereReranker)
     settings: Settings = field(default_factory=Settings)
 
     def __post_init__(self) -> None:
@@ -44,6 +45,7 @@ class RAGAgent:
             match_count=len(selected_matches),
             candidate_count=len(matches),
             gateway_enabled=self.gateway.enabled,
+            reranker_enabled=self.reranker.enabled,
         )
 
         context = "\n\n".join(self._format_context_block(match) for match in selected_matches)
@@ -87,6 +89,15 @@ class RAGAgent:
 
     async def _rerank_matches(self, user_query: str, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
         heuristic_ranked = sorted(matches, key=lambda match: self._heuristic_score(user_query, match), reverse=True)
+        candidate_matches = heuristic_ranked[: self.settings.rag_rerank_top_k]
+
+        if self.reranker.enabled:
+            try:
+                reranked = await self.reranker.rerank(user_query, candidate_matches, top_n=len(candidate_matches))
+                log_event(self.logger, 20, "rag_rerank_completed", provider="cohere", selected=len(reranked))
+                return reranked
+            except Exception as error:
+                log_event(self.logger, 40, "rag_rerank_failed", provider="cohere", error=str(error))
 
         if not self.gateway.enabled:
             log_event(self.logger, 20, "rag_rerank_completed", provider="heuristic", selected=len(heuristic_ranked))
@@ -94,7 +105,7 @@ class RAGAgent:
 
         candidate_payload = []
         preview_limit = self.settings.rag_chunk_preview_chars
-        for match in heuristic_ranked[: self.settings.rag_rerank_top_k]:
+        for match in candidate_matches:
             metadata = match.get("metadata", {})
             candidate_payload.append(
                 {
@@ -125,16 +136,16 @@ class RAGAgent:
             selected_ids = rerank_result.get("selected_chunk_ids", [])
             selected_map = {
                 (match.get("metadata", {}).get("chunk_id") or match.get("id")): match
-                for match in heuristic_ranked
+                for match in candidate_matches
             }
             reranked = [selected_map[chunk_id] for chunk_id in selected_ids if chunk_id in selected_map]
-            for match in heuristic_ranked:
+            for match in candidate_matches:
                 if match not in reranked:
                     reranked.append(match)
             log_event(self.logger, 20, "rag_rerank_completed", provider="openai", selected=len(reranked))
             return reranked
         except Exception as error:
-            log_event(self.logger, 40, "rag_rerank_failed", error=str(error))
+            log_event(self.logger, 40, "rag_rerank_failed", provider="openai", error=str(error))
             log_event(self.logger, 20, "rag_rerank_completed", provider="heuristic", selected=len(heuristic_ranked))
             return heuristic_ranked
 
@@ -176,6 +187,7 @@ class RAGAgent:
             "chunk_index": metadata.get("chunk_index"),
             "total_chunks": metadata.get("total_chunks"),
             "score": match.get("_score"),
+            "rerank_score": match.get("_rerank_score"),
         }
 
     def _format_context_block(self, match: dict[str, Any]) -> str:
@@ -187,6 +199,7 @@ class RAGAgent:
             f"Category: {match.get('category', 'unknown')}\n"
             f"Chunk: {metadata.get('chunk_index', 0) + 1}/{metadata.get('total_chunks', 1)}\n"
             f"Score: {match.get('_score')}\n"
+            f"Rerank score: {match.get('_rerank_score')}\n"
             f"Content: {cleaned_text}"
         )
 

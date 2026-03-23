@@ -11,7 +11,7 @@ from .auto_resolver import AutoResolverAgent
 from .rag_agent import RAGAgent
 from .router import RouterAgent
 from .triage_agent import TriageAgent
-from .turboshoot_agent import TurboShootAgent
+from .troubleshooting_agent import TroubleshootingAgent
 
 
 @dataclass
@@ -24,7 +24,7 @@ class SupportOrchestrator:
     rag_agent: RAGAgent | None = None
     triage_agent: TriageAgent | None = None
     auto_resolver: AutoResolverAgent | None = None
-    turboshoot_agent: TurboShootAgent | None = None
+    troubleshooting_agent: TroubleshootingAgent | None = None
 
     def __post_init__(self) -> None:
         self.logger = get_logger("fixmate.orchestrator")
@@ -37,7 +37,7 @@ class SupportOrchestrator:
         self.rag_agent = self.rag_agent or RAGAgent(gateway=self.gateway, knowledge_base=self.knowledge_base)
         self.triage_agent = self.triage_agent or TriageAgent(gateway=self.gateway, repository=self.repository)
         self.auto_resolver = self.auto_resolver or AutoResolverAgent(gateway=self.gateway, repository=self.repository)
-        self.turboshoot_agent = self.turboshoot_agent or TurboShootAgent(gateway=self.gateway, repository=self.repository)
+        self.troubleshooting_agent = self.troubleshooting_agent or TroubleshootingAgent(gateway=self.gateway, repository=self.repository)
 
     def handle_query(self, user_query: str) -> dict[str, Any]:
         return asyncio.run(self.handle_query_async(user_query))
@@ -64,13 +64,13 @@ class SupportOrchestrator:
                 log_event(self.logger, 20, "orchestration_completed", final_agent=result.get("agent"), route="troubleshoot")
                 return result
 
-        turboshoot = await self.turboshoot_agent.start(user_query, triage)
-        result = {"routing": routing, "triage": triage, **turboshoot}
+        troubleshooting = await self.troubleshooting_agent.start(user_query, triage)
+        result = {"routing": routing, "triage": triage, **troubleshooting}
         log_event(self.logger, 20, "orchestration_completed", final_agent=result.get("agent"), route="troubleshoot")
         return result
 
     async def continue_conversation_async(self, conversation_id: str, answers: dict[str, str]) -> dict[str, Any]:
         log_event(self.logger, 20, "orchestration_continue_started", conversation_id=conversation_id)
-        result = await self.turboshoot_agent.continue_session(conversation_id, answers)
+        result = await self.troubleshooting_agent.continue_session(conversation_id, answers)
         log_event(self.logger, 20, "orchestration_continue_completed", conversation_id=conversation_id, resolved=result.get("resolved"))
         return result
